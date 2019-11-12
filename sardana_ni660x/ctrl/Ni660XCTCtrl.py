@@ -152,7 +152,7 @@ class Ni660XCTCtrl(object):
             # Set Flag for NOT configured cards
             try:
                 self.card_configured[event_src] = False
-            except Exception, e:
+            except Exception as e:
                 msg = ("Failed to process event: " + 
                        "card_configured flag could not be set")
                 self._log.error(msg)
@@ -163,10 +163,10 @@ class Ni660XCTCtrl(object):
         if dev_state == TaurusSWDevState.Running:
             # Set Flag for NOT configured channels
             try:
-                idx = self.channels.values().index(event_src)
-                axis = self.channels.keys()[idx]
+                idx = list(self.channels.values()).index(event_src)
+                axis = list(self.channels.keys())[idx]
                 self.ch_configured[axis] = False
-            except Exception, e:
+            except Exception as e:
                 msg = ("Failed to process event: " + 
                        "channel_configured flag could not be set")
                 self._log.error(msg)
@@ -175,7 +175,7 @@ class Ni660XCTCtrl(object):
         channel_name = self.channelDevNamesList[axis-1]
         try:
             self.channels[axis] = taurus.Device(channel_name)
-        except Exception, e:
+        except Exception as e:
             msg = 'Exception when it created the taurus devices: %s' % e
             self._log.error(msg)
 
@@ -366,9 +366,9 @@ class Ni660XCTCtrl(object):
                 # To configure the buffer with 2 points in a single
                 # acquisition with hardware trigger in CICountEdgesChan case
                 if self.APP_TYPE == 'CICountEdgesChan' and self._repetitions == 1:
-                    repetitions = long(2)
+                    repetitions = int(2)
 
-                channel.write_attribute('SampPerChan', long(repetitions))
+                channel.write_attribute('SampPerChan', int(repetitions))
 
                 #TODO: Improve, set DMA to firsts 4 devices
                 #if self.current_ch_configured > 4:
@@ -419,7 +419,7 @@ class Ni660XCTCtrl(object):
             if channel.State() != PyTango.DevState.STANDBY:
                 channel.Stop()
             channel.write_attribute('SampleTimingType', 'Implicit')
-            channel.write_attribute('SampPerChan', long(self._repetitions))
+            channel.write_attribute('SampPerChan', int(self._repetitions))
             channel.write_attribute('HighTime', high_time)
             channel.write_attribute('LowTime', low_time)
 
@@ -451,7 +451,7 @@ class Ni660XCTCtrl(object):
                     data = channel.getAttribute(self.BUFFER_ATTR).read().value
                     if data is None:
                         data = numpy.array([0])
-                except Exception, e:
+                except Exception as e:
                     msg = ('ReadOne(%d): Exception while reading' +
                            ' buffer: %s' % (axis, e))
                     self._log.error(msg)
@@ -485,14 +485,15 @@ class Ni660XCTCtrl(object):
                     data = channel.getAttribute(self.BUFFER_ATTR).read().value
                     if data is None:
                         data = numpy.array([])
-                except Exception, e:
+                except Exception as e:
                     msg = ('ReadOne(%d): Exception while reading buffer: %s'
                            % (axis, e))
                     self._log.error(msg)
                 if len(data) > 0:
                     data = self._calculate(axis, data, index)
         self.index[axis] = index + len(data)
-        idx = range(index, self.index[axis])
+        # Unused variable
+        # idx = range(index, self.index[axis])
         data = data.tolist()
         return data
 
