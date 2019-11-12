@@ -96,7 +96,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         channel_name = self.channel_names[axis - 1]
         try:
             self.channels[axis] = PyTango.DeviceProxy(channel_name)
-        except Exception, e:
+        except Exception as e:
             msg = 'Could not create taurus device: %s, details: %s' %\
                   (channel_name, e)
             self._log.debug(msg)
@@ -142,7 +142,7 @@ class Ni660XTriggerGateController(TriggerGateController):
 
         channel.write_attribute("HighTime", active)
         channel.write_attribute("LowTime", passive)
-        channel.write_attribute("SampPerChan", long(repeats))
+        channel.write_attribute("SampPerChan", int(repeats))
                      
         timing_type = 'Implicit'
         
