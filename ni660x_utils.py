@@ -22,7 +22,7 @@ class ni_trigger(Macro):
         channel.command_inout('Start')
 
 
-class config_ni_trigger(Macro):
+class ni_config_trigger(Macro):
     """
     This macro configures a given channel of the ni660x card to operate
     as a trigger generator. It assumes that the name of the channel
