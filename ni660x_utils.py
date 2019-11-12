@@ -11,13 +11,14 @@ class ni_trigger(Macro):
     environment variable. This is used to create the proxy and start the
     sequence.
     """
-    param_def = [['ntriggers', Type.Integer, 1, 'Total number of triggers']]
+    param_def = [['ntriggers', Type.Integer, 0, 'Total number of triggers']]
 
     def run(self, ntriggers):
         ni_channel_name = self.getEnv('NITriggerChannel')
         channel = PyTango.DeviceProxy(ni_channel_name)
         channel.command_inout('Stop')
-        channel.write_attribute("SampPerChan", long(ntriggers))
+        if ntriggers>0:
+            channel.write_attribute("SampPerChan", long(ntriggers))
         channel.command_inout('Start')
 
 
@@ -28,7 +29,7 @@ class config_ni_trigger(Macro):
     from the ni660x is stored in a environment variable. This is used
     to create the proxy and setup the configuration.
     """
-    param_def = [['high_time', Type.String, None, 'Time on high state.'],
+    param_def = [['high_time', Type.Float, None, 'Time on high state.'],
                  ['low_time', Type.Float, None, 'Time on high state.'],
                  ['ntriggers', Type.Integer, 1, 'Total number of triggers'],
                  ['idle_state', Type.String, 'Low', 'Idle state value'],
