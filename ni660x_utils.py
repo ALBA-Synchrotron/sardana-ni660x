@@ -1,6 +1,12 @@
 
-from sardana.macroserver.macro import Macro, Type
+from sardana.macroserver.macro import Macro, Type, Hookable
 import taurus
+from sardana.macroserver.scan import SScan
+from sardana.macroserver.macros.scan import ascan, getCallable, UNCONSTRAINED
+import taurus
+import PyTango
+from numpy import linspace, sqrt
+import time
 
 
 NI660X_PFI = {'C0O': 'PFI36', 'C0A': 'PFI37', 'C0G': 'PFI38', 'C0S': 'PFI39',
@@ -13,7 +19,7 @@ NI660X_PFI = {'C0O': 'PFI36', 'C0A': 'PFI37', 'C0G': 'PFI38', 'C0S': 'PFI39',
               'C7O': 'PFI08', 'C7A': 'PFI09', 'C7G': 'PFI10', 'C7S': 'PFI11'}
 
 
-class ni_trigger(Macro):
+class ni_trigger(Macro, Hookable):
     """
     This macro starts a sequence of triggers  as configured by the
     config_ni_trigger macro. By default, launches a single trigger sequence.
@@ -59,17 +65,17 @@ class ni_config_trigger(Macro):
 
 class ni_connect_channels(Macro):
     """
-    This macro connect the given channel signals on the NI6602. The channels 
-    are identified by: RTSI[0-7] and/or C[0-7][O,S,G,A] , where the letters 
+    This macro connect the given channel signals on the NI6602. The channels
+    are identified by: RTSI[0-7] and/or C[0-7][O,S,G,A] , where the letters
     are:
         - O: Output
         - S: Source
         - G: Gate
-        - A: Auxiliary 
+        - A: Auxiliary
     To introduce the channel you should include the card: Dev[1-n].
 
-    Note: 
-        - This macro use the enviromen variable NI660XDsName. 
+    Requirements:
+        - This macro use the environment variable NI660XDsName.
         - Sardana 2.0 API.
     """
 
@@ -100,3 +106,55 @@ class ni_connect_channels(Macro):
             cmd = [connect_list[0], pair, 'DoNotInvertPolarity']
             self.debug(cmd)
             ni_device.ConnectTerms(cmd)
+
+
+class ni_config_counter(Macro):
+    """
+    This macro configure the counter and the master trigger channels  to use 
+    them on step or continuous scan.
+
+    Requirements:
+        - The macro use the environment variables NIMasterTrigger, NICountersDS 
+          (list of device names) and NIMasterSignal (signal use for the counters 
+          as timer e.g: /Dev1/RTSI0, /Dev2/PFI36).
+        - The counters should configure with the application: CICountEdgesChan.
+    """
+
+    param_def = [['mode', Type.String, None, 'continuous or step']]
+
+    def run(self, mode):
+        mode = mode.lower()
+        if mode not in ['continuous', 'step']:
+            raise ValueError('The value should be: continuous or step')
+        try:
+            ni_chn_names = self.getEnv('NICountersDS')
+            ni_signal_master = self.getEnv('NIMasterSignal')
+            ni_channel_master = self.getEnv('NIMasterTrigger')
+        except Exception as e:
+            msg_err = 'You should declare NICountersDS, ' \
+                      'NIMasterSignal and NIMasterTrigger. %s' % e
+            self.error(msg_err)
+
+        if mode == 'continuous':
+            for ni_chn_name in ni_chn_names:
+                chn_proxy = taurus.Device(ni_chn_name)
+                chn_proxy.init()
+                chn_proxy.write_attribute('SampleClockSource',
+                                          ni_signal_master)
+                chn_proxy.write_attribute('SampleTimingType',  'SampClk')
+                if ni_chn_names.index(ni_chn_name) > 4:
+                    chn_proxy.write_attribute('DataTransferMechanism',
+                                              'Interrupts')
+        else:
+            for ni_chn_name in ni_chn_names:
+                chn_proxy = taurus.Device(ni_chn_name)
+                chn_proxy.init()
+                chn_proxy.write_attribute('PauseTriggerType', 'DigLvl')
+                chn_proxy.write_attribute('PauseTriggerSource',
+                                          ni_signal_master)
+                chn_proxy.write_attribute('PauseTriggerWhen', 'Low')
+            master_proxy = PyTango.DeviceProxy(ni_channel_master)
+            master_proxy.init()
+            master_proxy.write_attribute('InitialDelayTime', 0)
+            master_proxy.write_attribute('LowTime', 0.001)
+            master_proxy.write_attribute('SampPerChan', long(1))
