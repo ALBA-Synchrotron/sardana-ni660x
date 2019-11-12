@@ -34,7 +34,7 @@ class ni_trigger(Macro, Hookable):
         channel = taurus.Device(ni_channel_name)
         channel.command_inout('Stop')
         if ntriggers > 0:
-            channel.write_attribute("SampPerChan", long(ntriggers))
+            channel.write_attribute("SampPerChan", int(ntriggers))
         channel.command_inout('Start')
 
 
@@ -58,7 +58,7 @@ class ni_config_trigger(Macro):
         channel.write_attribute("InitialDelayTime", delay_time)
         channel.write_attribute("HighTime", high_time)
         channel.write_attribute("LowTime", low_time)
-        channel.write_attribute("SampPerChan", long(ntriggers))
+        channel.write_attribute("SampPerChan", int(ntriggers))
         channel.write_attribute("IdleState", idle_state)
         channel.write_attribute("SampleTimingType", "Implicit")
 
@@ -164,4 +164,4 @@ class ni_config_counter(Macro):
             master_proxy.init()
             master_proxy.write_attribute('InitialDelayTime', 0)
             master_proxy.write_attribute('LowTime', 0.001)
-            master_proxy.write_attribute('SampPerChan', long(1))
+            master_proxy.write_attribute('SampPerChan', int(1))
