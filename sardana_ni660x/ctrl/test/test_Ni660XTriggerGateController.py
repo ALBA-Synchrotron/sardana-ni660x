@@ -3,7 +3,7 @@ from taurus.test import insertTest
 from sardana.pool.test.test_tggeneration import TGGenerationTestCase
 from sardana.pool.pooldefs import SynchParam, SynchDomain
 from sardana.pool.poolcontrollers.test import TriggerGateControllerTestCase
-from Ni660XTriggerGateController import Ni660XTriggerGateController
+from sardana_ni660x.ctrl.Ni660XTriggerGateController import Ni660XTriggerGateController
 
 # IMPORTANT: use your device name!
 CHANNEL_DEV_NAMES = 'controls01:10000/io/lab/ictlael01-Dev1-ctr0,'

@@ -1,6 +1,6 @@
 from taurus.test.base import insertTest
 from sardana.pool.poolcontrollers.test import TriggerGateControllerTestCase
-from Ni660XPositionTriggerGateController import\
+from sardana_ni660x.ctrl.Ni660XPositionTriggerGateController import\
                                             Ni660XPositionTriggerGateController
 
 @insertTest(helper_name='abort', configuration={'repetitions': 10,
