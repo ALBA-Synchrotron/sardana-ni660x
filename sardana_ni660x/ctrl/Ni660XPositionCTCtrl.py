@@ -1,11 +1,13 @@
-from Ni660XCTCtrl import Ni660XCTCtrl
-
 from taurus import Attribute
 from sardana import DataAccess
 from sardana.pool import AcqSynch
 from sardana.pool.controller import (CounterTimerController,
                                      Memorize, NotMemorized, Memorized)
 from sardana.pool.controller import Type, Access
+
+# TODO: Change to relative import when Sardana implments entry points
+from Ni660XCTCtrl import Ni660XCTCtrl
+
 
 ReadWrite = DataAccess.ReadWrite
 
@@ -25,7 +27,7 @@ class Ni660XPositionCTCtrl(Ni660XCTCtrl, CounterTimerController):
     axis_attributes = dict(Ni660XCTCtrl.axis_attributes)
     axis_attributes.update({
         "pulsesPerRevolution": {
-            Type: long,
+            Type: int,
             Access: ReadWrite,
             Memorize: Memorized
         },

@@ -1,11 +1,12 @@
-from Ni660XCTCtrl import *
 from sardana.pool.controller import CounterTimerController
+# TODO: Change to relative import when Sardana implments entry points
+from Ni660XCTCtrl import *
+
 
 # The order of inheritance is important. The CounterTimerController
 # implements the API methods e.g. StateOne. Their default implementation raises
 # the NotImplementedError. The Ni660XCTCtrl implementation must take
 # precedence.
-
 class Ni660XPulseWidthCTCtrl(Ni660XCTCtrl, CounterTimerController):
     """This class is the Ni600X counter Sardana CounterTimerController.
     It can work in step and continuous scan mode. """

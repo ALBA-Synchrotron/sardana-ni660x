@@ -1,9 +1,9 @@
 import numpy
-from Ni660XCTCtrl import Ni660XCTCtrl
 from sardana.pool import AcqSynch
-
-
 from sardana.pool.controller import CounterTimerController
+# TODO: Change to relative import when Sardana implments entry points
+from Ni660XCTCtrl import Ni660XCTCtrl
+
 
 # The order of inheritance is important. The CounterTimerController
 # implements the API methods e.g. StateOne. Their default implementation raises
