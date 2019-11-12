@@ -80,10 +80,12 @@ class ni_connect_channels(Macro):
     """
 
     param_def = [['channels', [['channel', Type.String, None, '/Dev1/C10'],
-                               {'min': 2}],
-                  None, 'List of channels and internal signals']]
+                               {'min': 2}], None, 
+                  'List of channels and internal signals'],
+                 ['polarity', Type.String, 'DoNotInvertPolarity', 
+                  'Polarity connection']]
 
-    def run(self, channels):
+    def run(self, channels, polarity):
         connect_list = []
         try:
             ni_device_name = self.getEnv('NI660XDsName')
@@ -101,9 +103,14 @@ class ni_connect_channels(Macro):
                 chn = '/'.join(dev_chn)
             connect_list.append(chn)
 
+        for pair in connect_list[1:]:
+            cmd = [connect_list[0], pair]
+            self.debug(cmd)
+            ni_device.DisconnectTerms(cmd)
+
         # Include the last parameter DoNotInvertPolarity or InvertPolarity
         for pair in connect_list[1:]:
-            cmd = [connect_list[0], pair, 'DoNotInvertPolarity']
+            cmd = [connect_list[0], pair, polarity]
             self.debug(cmd)
             ni_device.ConnectTerms(cmd)
 
