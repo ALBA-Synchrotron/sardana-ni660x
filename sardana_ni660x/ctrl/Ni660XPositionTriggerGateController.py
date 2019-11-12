@@ -96,7 +96,7 @@ class Ni660XPositionTriggerGateController(TriggerGateController):
             device_name = prop_dict.get('deviceName')[0]
             chn_str = "/%s/%s" % (device_name, counter_name.get("out"))
             attr.write(chn_str)
-        except Exception, e:
+        except Exception as e:
             msg = 'Could not create taurus device: %s, details: %s' %\
                   (position_name, e)
             self._log.debug(msg)
@@ -107,7 +107,7 @@ class Ni660XPositionTriggerGateController(TriggerGateController):
             attr = ch_generator.getAttribute('SourceTerminal')
             attr.write(chn_str)
 
-        except Exception, e:
+        except Exception as e:
             msg = 'Could not create taurus device: %s, details: %s' %\
                   (generator_name, e)
             self._log.debug(msg)
@@ -225,7 +225,7 @@ class Ni660XPositionTriggerGateController(TriggerGateController):
                     offset = 4
                 value = offset
             elif name == 'repetitions':
-                value = long(value)
+                value = int(value)
             attr.write(value)
         elif name in self._ch_pos_attr:
             if name == 'initialpos':
@@ -243,7 +243,7 @@ class Ni660XPositionTriggerGateController(TriggerGateController):
         value = None
         if name in self._ch_gen_attr:
             attr_name = name
-            if self.attribute_relations.has_key(name):
+            if name in self.attribute_relations:
                 attr_name = self.attribute_relations.get(name)
             attr = ch_generator.getAttribute(attr_name)
             value = attr.read().value
