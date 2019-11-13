@@ -1,12 +1,6 @@
-
 from sardana.macroserver.macro import Macro, Type, Hookable
 import taurus
-from sardana.macroserver.scan import SScan
-from sardana.macroserver.macros.scan import ascan, getCallable, UNCONSTRAINED
-import taurus
 import PyTango
-from numpy import linspace, sqrt
-import time
 
 
 NI660X_PFI = {'C0O': 'PFI36', 'C0A': 'PFI37', 'C0G': 'PFI38', 'C0S': 'PFI39',
