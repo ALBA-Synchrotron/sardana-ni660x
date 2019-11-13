@@ -155,7 +155,13 @@ class Ni660XTriggerGateController(TriggerGateController):
             # The trigger should be retriggerable by external trigger?
             if self.retriggerable:
                 channel.write_attribute('retriggerable',1)
-                timing_type = 'OnDemand'                
+                timing_type = 'OnDemand'
+                # Set the LowTime to the minimum value. It is needed because
+                # the latency time of the measurement group does not take
+                # care the latency time of the trigger, and when we use the
+                # NI as slave of the icepapa or pmac it needs time to
+                # prepare the next trigger.
+                channel.write_attribute("LowTime", 0.000003)
         else:
             startTriggerSource = 'None'
             startTriggerType = 'None'            
@@ -165,7 +171,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         delay = delay + self.extraInitialDelayTime
         self.extraInitialDelayTime = 0
         channel.write_attribute("InitialDelayTime", delay)
-        channel.write_attribute('SampleTimingType',timing_type)
+        channel.write_attribute('SampleTimingType', timing_type)
         
     def PreStartOne(self, axis, value=None):
         """
