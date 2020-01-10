@@ -3,7 +3,7 @@ import numpy
 
 import PyTango
 import taurus
-from taurus.core.taurusbasetypes import TaurusSWDevState
+from taurus.core.taurusbasetypes import TaurusDevState
 from taurus.core.tauruslistener import TaurusListener
 from taurus.core.util import SafeEvaluator
 
@@ -147,8 +147,8 @@ class Ni660XCTCtrl(object):
 
     def cardEventReceived(self, event_src, event_type, event_value):
         '''Method which processes the received events.'''
-        dev_state = event_value.value
-        if dev_state == TaurusSWDevState.Running:
+        dev_state = event_value.rvalue
+        if dev_state == TaurusDevState.Ready:
             # Set Flag for NOT configured cards
             try:
                 self.card_configured[event_src] = False
@@ -159,8 +159,8 @@ class Ni660XCTCtrl(object):
 
     def counterEventReceived(self, event_src, event_type, event_value):
         '''Method which processes the received events.'''
-        dev_state = event_value.value
-        if dev_state == TaurusSWDevState.Running:
+        dev_state = event_value.rvalue
+        if dev_state == TaurusDevState.Ready:
             # Set Flag for NOT configured channels
             try:
                 idx = list(self.channels.values()).index(event_src)
@@ -256,7 +256,7 @@ class Ni660XCTCtrl(object):
                 self.ch_configured[axis] = False
 
     def StateOneSingle(self, axis):
-        state = self.channels[axis].state()
+        state = self.channels[axis].stateObj.read().rvalue
 
         # Force State ON for Timer
         if axis == 1:
@@ -281,7 +281,7 @@ class Ni660XCTCtrl(object):
 
     def StateOneMultiple(self, axis):
         if axis != 1:
-            state = self.channels[axis].state()
+            state = self.channels[axis].stateObj.read().rvalue
             # RUNNING state translates directly to MOVING
             if state == PyTango.DevState.RUNNING:
                 state = State.Moving
@@ -448,7 +448,7 @@ class Ni660XCTCtrl(object):
             if self.delay_counter[axis] == 0:
                 try:
                     channel = self.channels[axis]
-                    data = channel.getAttribute(self.BUFFER_ATTR).read().value
+                    data = channel.getAttribute(self.BUFFER_ATTR).read().rvalue.magnitude
                     if data is None:
                         data = numpy.array([0])
                 except Exception as e:
@@ -482,7 +482,7 @@ class Ni660XCTCtrl(object):
             if self.delay_counter[axis] == 0:
                 try:
                     channel = self.channels[axis]
-                    data = channel.getAttribute(self.BUFFER_ATTR).read().value
+                    data = channel.getAttribute(self.BUFFER_ATTR).read().rvalue.magnitude
                     if data is None:
                         data = numpy.array([])
                 except Exception as e:
