@@ -6,7 +6,7 @@ from sardana.pool.controller import (CounterTimerController,
 from sardana.pool.controller import Type, Access
 
 # TODO: Change to relative import when Sardana implments entry points
-from Ni660XCTCtrl import Ni660XCTCtrl
+from .Ni660XCTCtrl import Ni660XCTCtrl
 
 
 ReadWrite = DataAccess.ReadWrite

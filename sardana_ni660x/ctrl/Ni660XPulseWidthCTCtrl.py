@@ -1,6 +1,6 @@
 from sardana.pool.controller import CounterTimerController
 # TODO: Change to relative import when Sardana implments entry points
-from Ni660XCTCtrl import *
+from .Ni660XCTCtrl import *
 
 
 # The order of inheritance is important. The CounterTimerController
