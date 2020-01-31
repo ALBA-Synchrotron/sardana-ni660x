@@ -217,7 +217,8 @@ class Ni660XCTCtrl(object):
             for card_dev_name in cards.keys():
                 card_dev = taurus.Device(card_dev_name)
                 card_dev.removeListener(self.cardEventReceived)
-
+                del self.cards[card_dev]
+                del self.card_configured[card_dev]
 
     def GetAxisExtraPar(self, axis, name):
         self._log.debug("GetAxisExtraPar(%d, %s) entering..." % (axis, name))
