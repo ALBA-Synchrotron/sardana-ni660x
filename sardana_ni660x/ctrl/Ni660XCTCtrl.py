@@ -257,7 +257,7 @@ class Ni660XCTCtrl(object):
                 self.ch_configured[axis] = False
 
     def StateOneSingle(self, axis):
-        state = self.channels[axis].stateObj.read().rvalue
+        state = self.channels[axis].stateObj.read(cache=False).rvalue
 
         # Force State ON for Timer
         if axis == 1:
@@ -282,7 +282,7 @@ class Ni660XCTCtrl(object):
 
     def StateOneMultiple(self, axis):
         if axis != 1:
-            state = self.channels[axis].stateObj.read().rvalue
+            state = self.channels[axis].stateObj.read(cache=False).rvalue
             # RUNNING state translates directly to MOVING
             if state == PyTango.DevState.RUNNING:
                 state = State.Moving
