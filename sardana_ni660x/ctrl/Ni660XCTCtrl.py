@@ -217,7 +217,8 @@ class Ni660XCTCtrl(object):
             for card_dev_name in cards.keys():
                 card_dev = taurus.Device(card_dev_name)
                 card_dev.removeListener(self.cardEventReceived)
-
+                del self.cards[card_dev]
+                del self.card_configured[card_dev]
 
     def GetAxisExtraPar(self, axis, name):
         self._log.debug("GetAxisExtraPar(%d, %s) entering..." % (axis, name))
@@ -228,14 +229,12 @@ class Ni660XCTCtrl(object):
             v = self.channelDevNamesList[axis-1]
         elif name in self.direct_attributes:
             channel = self.channels[axis]
-            attr = channel.getAttribute(name)
-            v = attr.read().value
+            v = channel.read_attribute(name).value
         else:
             v = self.attributes[axis][name]
             if name in self.cached_attributes and v is None:
                 channel = self.channels[axis]
-                attr = channel.getAttribute(name)
-                v = attr.read().value
+                v = channel.read_attribute(name).value
         return v
 
     def SetAxisExtraPar(self, axis, name, value):
@@ -248,15 +247,14 @@ class Ni660XCTCtrl(object):
             channel = self.channels[axis]
             if channel.State() != PyTango.DevState.STANDBY:
                 channel.Stop()
-            attr = self.channels[axis].getAttribute(name)
-            attr.write(value)
+            self.channels[axis].write_attribute(name, value)
         else:
             self.attributes[axis][name] = value
             if name in self.cached_attributes:
                 self.ch_configured[axis] = False
 
     def StateOneSingle(self, axis):
-        state = self.channels[axis].stateObj.read().rvalue
+        state = self.channels[axis].State()
 
         # Force State ON for Timer
         if axis == 1:
@@ -281,7 +279,7 @@ class Ni660XCTCtrl(object):
 
     def StateOneMultiple(self, axis):
         if axis != 1:
-            state = self.channels[axis].stateObj.read().rvalue
+            state = self.channels[axis].State()
             # RUNNING state translates directly to MOVING
             if state == PyTango.DevState.RUNNING:
                 state = State.Moving
@@ -448,7 +446,7 @@ class Ni660XCTCtrl(object):
             if self.delay_counter[axis] == 0:
                 try:
                     channel = self.channels[axis]
-                    data = channel.getAttribute(self.BUFFER_ATTR).read().rvalue.magnitude
+                    data = channel.read_attribute(self.BUFFER_ATTR).value
                     if data is None:
                         data = numpy.array([0])
                 except Exception as e:
@@ -482,7 +480,7 @@ class Ni660XCTCtrl(object):
             if self.delay_counter[axis] == 0:
                 try:
                     channel = self.channels[axis]
-                    data = channel.getAttribute(self.BUFFER_ATTR).read().rvalue.magnitude
+                    data = channel.read_attribute(self.BUFFER_ATTR).value
                     if data is None:
                         data = numpy.array([])
                 except Exception as e:
