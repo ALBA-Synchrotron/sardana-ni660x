@@ -1,6 +1,6 @@
-from taurus import Attribute
+import tango
+
 from sardana import DataAccess
-from sardana.pool import AcqSynch
 from sardana.pool.controller import (CounterTimerController,
                                      Memorize, NotMemorized, Memorized)
 from sardana.pool.controller import Type, Access
@@ -8,6 +8,7 @@ from sardana_ni660x.ctrl.Ni660XCTCtrl import Ni660XCTCtrl
 
 
 ReadWrite = DataAccess.ReadWrite
+
 
 # The order of inheritance is important. The CounterTimerController
 # implements the API methods e.g. StateOne. Their default implementation raises
@@ -69,25 +70,33 @@ class Ni660XPositionCTCtrl(Ni660XCTCtrl, CounterTimerController):
             self.attributes[axis]['sign'] = 1
             self.attributes[axis]['initialpos'] = None
             self.attributes[axis]['initialposattr'] = ""
+            self.attributes[axis]['initialposattrproxy'] = None
             self.attributes[axis]['initialposvalue'] = 0
 
     def PreStartOneCT(self, axis):
         if Ni660XCTCtrl.PreStartOneCT(self, axis) and axis != 1:
-            initial_pos_value = self.attributes[axis]['initialpos']
-            self.attributes[axis]['initialpos'] = None
-            if initial_pos_value is None:
-                initial_pos_attr = self.attributes[axis]['initialposattr']
-                if len(initial_pos_attr) > 0:
-                    attr_value = Attribute(initial_pos_attr).read().value
-                    try:
-                        initial_pos_value = float(attr_value)
-                    except ValueError:
-                        msg = "initialPosAttr (%s) is not float" % initial_pos_attr
-                        raise Exception(msg)
-                else:
-                    initial_pos_value = 0
+            initial_pos_value = self._get_initial_pos_value(axis)
             self.attributes[axis]["initialposvalue"] = initial_pos_value
         return True
+
+    def _get_initial_pos_value(self, axis):
+        axis_attr = self.attributes[axis]
+        initial_pos_value = axis_attr.get('initialpos')
+        if initial_pos_value is None:
+            initial_pos_value = 0
+            proxy = axis_attr['initialposattrproxy']
+            attr_name = axis_attr['initialposattr']
+            if proxy is None and attr_name:
+                proxy = tango.AttributeProxy(attr_name)
+                # save in cache to avoid recreating AttributeProxy
+                axis_attr['initialposattrproxy'] = proxy
+            if proxy is not None:
+                try:
+                    initial_pos_value = float(proxy.read().value)
+                except ValueError:
+                    msg = "initialPosAttr (%s) is not float" % attr_name
+                    raise Exception(msg)
+        return initial_pos_value
 
     def _calculate(self, axis, data, index):
         data = data[index:]
