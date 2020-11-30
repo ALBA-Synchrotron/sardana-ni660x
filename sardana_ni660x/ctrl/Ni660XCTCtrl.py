@@ -318,8 +318,8 @@ class Ni660XCTCtrl(object):
         #                (axis, state, status))
         return state, status
 
-    def PreStartAllCT(self):
-        self._log.debug("PreStartAllCT(): Entering...")
+    def PreStartAll(self):
+        self._log.debug("PreStartAll(): Entering...")
         # Reset all the channel's Indexe
         self.index = {}
         for card_dev in self.card_configured.keys():
@@ -334,14 +334,14 @@ class Ni660XCTCtrl(object):
                                        dest_terminal,
                                        polarity])
             self.card_configured[card_dev] = True
-        self._log.debug("PreStartAllCT(): Leaving...")
+        self._log.debug("PreStartAll(): Leaving...")
         return True
 
     def StartAll(self):
         pass
 
-    def PreStartOneCT(self, axis):
-        self._log.debug("PreStartOneCT(%d): Entering..." % axis)
+    def PreStartOne(self, axis, value):
+        self._log.debug("PreStartOne(%d, %f): Entering..." % (axis, value))
         self.index[axis] = 0
         self.aborted[axis] = False
         self.delay_counter[axis] = 0
@@ -379,21 +379,23 @@ class Ni660XCTCtrl(object):
                 self.current_ch_configured += 1
         return True
 
-    def StartOneCT(self, axis):
-        #self._log.debug("StartOneCT(%d): Entering..." % axis)
+    def StartOne(self, axis, value):
+        #self._log.debug("StartOne(%d, %f): Entering..." % (axis, value))
         if (axis != 1 or self._synchronization == AcqSynch.SoftwareTrigger):
             channel = self.channels[axis]
             channel.start()
-        #self._log.debug("StartOneCT(%d): Leaving..." % axis)
+        #self._log.debug("StartOne(%d, %f): Leaving..." % (axis, value))
 
-    def PreLoadOne(self, axis, value):
-        #self._log.debug("PreLoadOne(%d, %f): Entering...", axis, value)
-        #self._log.debug("PreLoadOne(%d, %f): Leaving...", axis, value)
+    def PreLoadOne(self, axis, value, repetitions, latency):
+        #self._log.debug("PreLoadOne(%d, %f, %d, %f): Entering...",
+        #                axis, value, repetitions, latency)
+        #self._log.debug("PreLoadOne(%d, %f): Leaving...",
+        #                axis, value, repetitions, latency)
         return True
 
-    def LoadOne(self, axis, value, repetitions):
-        self._log.debug("LoadOne(%d, %f, %r): Entering...", axis, value,
-                        repetitions)
+    def LoadOne(self, axis, value, repetitions, latency):
+        self._log.debug("LoadOne(%d, %f, %r, %f): Entering...", axis, value,
+                        repetitions, latency)
         self._repetitions = repetitions
         self._integration_time = value
         self.current_ch_configured = 0
@@ -421,7 +423,8 @@ class Ni660XCTCtrl(object):
             channel.write_attribute('HighTime', high_time)
             channel.write_attribute('LowTime', low_time)
 
-        #self._log.debug("LoadOne(%d, %f): Leaving...", axis, value)
+        #self._log.debug("LoadOne(%d, %f, %d, %f): Leaving...",
+        #                axis, value, repetitions, latency)
 
     def AbortOne(self, axis):
         # In case of Software _synchronization Stop the timer as well
