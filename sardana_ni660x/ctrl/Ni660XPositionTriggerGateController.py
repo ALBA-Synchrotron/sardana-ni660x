@@ -118,11 +118,11 @@ class Ni660XPositionTriggerGateController(TriggerGateController):
         device of the corresponding channel."""
         self.attributes.pop(axis)
 
-    def PreStartOne(self, axis):
+    def PreStartOne(self, axis, value):
         """Prepare axis for generation.
         """
         tg = self.attributes[axis]
-        self._log.debug('PreStartOne(%d): entering...' % axis)
+        self._log.debug('PreStartOne(%d, %f): entering...' % (axis, value))
         ch_generator = tg['ch_generator']
         state = ch_generator.getAttribute('State')
         sta = from_tango_state_to_state(state.read().value)
@@ -151,20 +151,20 @@ class Ni660XPositionTriggerGateController(TriggerGateController):
         sample_mode.write('Finite')
         sample_timing_type = ch_generator.getAttribute('SampleTimingType')
         sample_timing_type.write('Implicit')
-        self._log.debug('PreStartOne(%d): entering...' % axis)
+        self._log.debug('PreStartOne(%d, %f): entering...' % (axis, value))
         return True
 
-    def StartOne(self, axis):
+    def StartOne(self, axis, value):
         """Start generation - start the specified channel.
         """
-        self._log.debug('StartOne(%d): entering...' % axis)
+        self._log.debug('StartOne(%d, %f): entering...' % (axis, value))
         tg = self.attributes[axis]
         ch_generator = tg['ch_generator']
         ch_position = tg['ch_position']
         self._Started = True
         ch_position.Start()
         ch_generator.Start()
-        self._log.debug('StartOne(%d): leaving...' % axis)
+        self._log.debug('StartOne(%d, %f): leaving...' % (axis, value))
 
     def AbortOne(self, axis):
         """Stop generation - stop the specified channel

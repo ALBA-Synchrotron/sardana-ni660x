@@ -73,8 +73,8 @@ class Ni660XPositionCTCtrl(Ni660XCTCtrl, CounterTimerController):
             self.attributes[axis]['initialposattrproxy'] = None
             self.attributes[axis]['initialposvalue'] = 0
 
-    def PreStartOneCT(self, axis):
-        if Ni660XCTCtrl.PreStartOneCT(self, axis) and axis != 1:
+    def PreStartOne(self, axis, value):
+        if Ni660XCTCtrl.PreStartOne(self, axis, value) and axis != 1:
             initial_pos_value = self._get_initial_pos_value(axis)
             self.attributes[axis]["initialposvalue"] = initial_pos_value
         return True

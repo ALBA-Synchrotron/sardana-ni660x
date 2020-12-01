@@ -28,8 +28,8 @@ class Ni660XPulseWidthCTCtrl(Ni660XCTCtrl, CounterTimerController):
         CounterTimerController.__init__(self, inst, props, *args, **kwargs)
         Ni660XCTCtrl.__init__(self, inst, props, *args, **kwargs)
 
-    def PreStartOneCT(self, axis):
-        if (Ni660XCTCtrl.PreStartOneCT(self, axis) and axis != 1):
+    def PreStartOne(self, axis, value):
+        if (Ni660XCTCtrl.PreStartOne(self, axis, value) and axis != 1):
             channel = self.channels[axis]
             self._log.debug(self.counterName[axis])
             source_terminal = getPFIName(self.counterName[axis],'src')
