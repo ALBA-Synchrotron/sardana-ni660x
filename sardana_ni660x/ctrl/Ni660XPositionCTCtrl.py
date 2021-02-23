@@ -108,4 +108,4 @@ class Ni660XPositionCTCtrl(Ni660XCTCtrl, CounterTimerController):
     def SetAxisExtraPar(self, axis, name, value):
         super().SetAxisExtraPar(axis, name, value)
         if name.lower() == 'initialposattr':
-            self.attributes['axis']['initialposattrproxy'] = None
+            self.attributes[axis]['initialposattrproxy'] = None
