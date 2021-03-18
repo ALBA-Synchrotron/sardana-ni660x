@@ -80,7 +80,10 @@ class Ni660XCTCtrl(object):
                                            Type: str},
                        'connectTerms': {Description: CONNECTTERMS_DOC,
                                         Type: str,
-                                        DefaultValue: '{}'}
+                                        DefaultValue: '{}'},
+                       'latencyTime': {Description: 'Controller latency time',
+                                       Type: float,
+                                       DefaultValue: 25e-7}
                       }
 
     axis_attributes = {
@@ -134,7 +137,7 @@ class Ni660XCTCtrl(object):
         self.card_configured = {}
         self.ch_configured = {}
         self.sev = SafeEvaluator()
-        self._latency_time = self.min_time
+        self._latency_time = self.latencyTime
         self.current_ch_configured = 0
         cards = self.sev.eval(self.connectTerms)
         for card_dev_name in cards.keys():
