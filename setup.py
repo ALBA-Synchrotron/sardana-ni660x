@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 def main():
     """Main method collecting all the parameters to setup."""
     name = "sardana-ni660x"
-    version = "0.1.0"
+    _version = "0.1.0"
     description = "NI660X Sardana Controller"
     author = "ALBA controls team"
     author_email = "controls@cells.es"
@@ -20,7 +20,7 @@ def main():
 
     setup(
         name=name,
-        version=version,
+        version=_version,
         description=description,
         author=author,
         author_email=author_email,
