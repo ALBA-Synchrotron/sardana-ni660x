@@ -3,8 +3,6 @@ import numpy
 
 import PyTango
 import taurus
-from taurus.core.taurusbasetypes import TaurusDevState
-from taurus.core.tauruslistener import TaurusListener
 from taurus.core.util import SafeEvaluator
 
 from sardana import State
@@ -12,7 +10,6 @@ from sardana.pool import AcqSynch
 from sardana.pool.controller import (CounterTimerController, Memorize,
                                      Memorized, NotMemorized, Type, Access,
                                      DataAccess, Description, DefaultValue)
-from sardana.tango.core.util import from_tango_state_to_state
 from sardana.sardanavalue import SardanaValue
 
 ReadWrite = DataAccess.ReadWrite
