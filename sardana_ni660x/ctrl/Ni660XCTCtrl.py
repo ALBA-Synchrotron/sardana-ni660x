@@ -143,36 +143,9 @@ class Ni660XCTCtrl(object):
         for card_dev_name in cards.keys():
             value = cards[card_dev_name]
             card_dev = taurus.Device(card_dev_name)
-            card_dev.addListener(self.cardEventReceived)
             self.cards[card_dev] = value
             self.card_configured[card_dev] = False
 
-
-    def cardEventReceived(self, event_src, event_type, event_value):
-        '''Method which processes the received events.'''
-        dev_state = event_value.rvalue
-        if dev_state == TaurusDevState.Ready:
-            # Set Flag for NOT configured cards
-            try:
-                self.card_configured[event_src] = False
-            except Exception as e:
-                msg = ("Failed to process event: " + 
-                       "card_configured flag could not be set")
-                self._log.error(msg)
-
-    def counterEventReceived(self, event_src, event_type, event_value):
-        '''Method which processes the received events.'''
-        dev_state = event_value.rvalue
-        if dev_state == TaurusDevState.Ready:
-            # Set Flag for NOT configured channels
-            try:
-                idx = list(self.channels.values()).index(event_src)
-                axis = list(self.channels.keys())[idx]
-                self.ch_configured[axis] = False
-            except Exception as e:
-                msg = ("Failed to process event: " + 
-                       "channel_configured flag could not be set")
-                self._log.error(msg)
 
     def AddDevice(self, axis):
         channel_name = self.channelDevNamesList[axis-1]
@@ -201,8 +174,6 @@ class Ni660XCTCtrl(object):
                       '%r != ' \
                       '%r' % (axis, app_type, self.APP_TYPE)
                 self._log.error(msg)
-            channel = self.channels[axis]
-            channel.addListener(self.counterEventReceived)
             self.ch_configured[axis] = False
             self.attributes[axis] = {}
             for name in self.cached_attributes:
@@ -211,7 +182,6 @@ class Ni660XCTCtrl(object):
     def DeleteDevice(self, axis):
         # For input channels, remove cache.
         if axis != 1:
-            self.channels[axis].removeListener(self.counterEventReceived)
             self.attributes.pop(axis)
             self.ch_configured.pop(axis)
         self.channels.pop(axis)
@@ -219,7 +189,6 @@ class Ni660XCTCtrl(object):
             cards = self.sev.eval(self.connectTerms)
             for card_dev_name in cards.keys():
                 card_dev = taurus.Device(card_dev_name)
-                card_dev.removeListener(self.cardEventReceived)
                 del self.cards[card_dev]
                 del self.card_configured[card_dev]
 
