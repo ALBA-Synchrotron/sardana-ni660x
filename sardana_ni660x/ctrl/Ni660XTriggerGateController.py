@@ -1,5 +1,4 @@
 import PyTango
-import taurus
 from sardana import State
 from sardana.pool.pooldefs import SynchDomain, SynchParam
 from sardana.pool.controller import (TriggerGateController, Type, Description,
@@ -32,7 +31,7 @@ def eval_state(state):
 class Ni660XTriggerGateController(TriggerGateController):
 
     MaxDevice = 32
-    min_time = 25e-7
+    min_time = 25e-6
 
     ctrl_properties = {
         'channelDevNames': {
