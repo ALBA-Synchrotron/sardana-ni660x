@@ -32,7 +32,7 @@ def eval_state(state):
 class Ni660XTriggerGateController(TriggerGateController):
 
     MaxDevice = 32
-    # min_time = 25e-7
+    min_time = 25e-7
 
     ctrl_properties = {
         'channelDevNames': {
@@ -141,7 +141,13 @@ class Ni660XTriggerGateController(TriggerGateController):
             channel.stop()
 
         channel.write_attribute("HighTime", active)
-        channel.write_attribute("LowTime", passive)
+
+        if passive < min_time:
+            channel.write_attribute("LowTime", min_time)
+            self._log.debug("Changin passive time to the ni660x minimum")
+        else:
+            channel.write_attribute("LowTime", passive)
+
         channel.write_attribute("SampPerChan", int(repeats))
                      
         timing_type = 'Implicit'
