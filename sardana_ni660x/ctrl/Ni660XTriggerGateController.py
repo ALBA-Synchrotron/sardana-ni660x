@@ -143,7 +143,7 @@ class Ni660XTriggerGateController(TriggerGateController):
 
         if passive < self.min_time:
             channel.write_attribute("LowTime", self.min_time)
-            self._log.debug("Changin passive time to the ni660x minimum")
+            self._log.warning("Changing passive time to the ni660x minimum")
         else:
             channel.write_attribute("LowTime", passive)
 
