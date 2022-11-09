@@ -260,11 +260,16 @@ class Ni660XCTCtrl(object):
             # if yes, return ON, if data were not yet passed
             # return MOVING
             elif state == PyTango.DevState.ON:
-                index = self.index[axis]
-                if index < self._repetitions:
-                    state = State.Moving
-                else:
+                if axis not in self.index:
+                    # The State is called without started the acquisition it
+                    # is possible on the measurement group read state
                     state = State.On
+                else:
+                    index = self.index[axis]
+                    if index < self._repetitions:
+                        state = State.Moving
+                    else:
+                        state = State.On
         else:
             # Simulate state machine of the timer, if all the data were
             # passed or the timer was aborted, return ON.
