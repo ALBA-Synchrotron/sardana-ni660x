@@ -72,6 +72,12 @@ class Ni660XTriggerGateController(TriggerGateController):
             Access: ReadWrite,
             Memorize: Memorized,
             DefaultValue: IdleState.NOT_SET.value
+        },
+        'dutyCycle': {
+            Type: float,
+            Access: ReadWrite,
+            Memorize: Memorized,
+            DefaultValue: 100
         }
     }
 
@@ -94,6 +100,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         self.retriggerable = False
         self.extraInitialDelayTime = 0
         self.idle_states = {}
+        self.duty_cycles = {}
 
     def AddDevice(self, axis):
         """
@@ -132,7 +139,7 @@ class Ni660XTriggerGateController(TriggerGateController):
 
         group = configuration[0]
         delay = group[SynchParam.Delay][SynchDomain.Time]
-        active = group[SynchParam.Active][SynchDomain.Time]
+        active = group[SynchParam.Active][SynchDomain.Time] * (self.duty_cycles[axis]/100)
         total = group[SynchParam.Total][SynchDomain.Time]
         passive = total - active
         repeats = group[SynchParam.Repeats]
@@ -240,6 +247,8 @@ class Ni660XTriggerGateController(TriggerGateController):
             v = self.extraInitialDelayTime
         elif name == 'idleState':
             v = self.idle_states[axis].value
+        elif name == 'dutyCycle':
+            v = self.duty_cycles[axis]
         return v
 
     def SetAxisExtraPar(self, axis, name, value):
@@ -260,3 +269,8 @@ class Ni660XTriggerGateController(TriggerGateController):
             error_msg = "String {} must be either in {}".format(value, idle_states)
             assert value in idle_states, error_msg
             self.idle_states[axis] = IdleState(value)
+        elif name == 'dutyCycle':
+            error_msg = "Value {} must be a percentage between 0 (not included) " + \
+                        "and 100 (included): (0,100]".format(value)
+            assert 0 < value <=100, error_msg
+            self.duty_cycles[axis] = value
