@@ -7,6 +7,8 @@ from sardana.pool.controller import (TriggerGateController, Type, Description,
 
 from sardana.tango.core.util import from_tango_state_to_state
 
+from sardana_ni660x.utils import IdleState
+
 ReadWrite = DataAccess.ReadWrite
 ReadOnly = DataAccess.ReadOnly
 
@@ -65,6 +67,12 @@ class Ni660XTriggerGateController(TriggerGateController):
             Memorize: Memorized,
             DefaultValue: 0
         },
+        'idleState': {
+            Type: str,
+            Access: ReadWrite,
+            Memorize: Memorized,
+            DefaultValue: IdleState.NOT_SET.value
+        }
     }
 
     # relation between state and status  
@@ -85,7 +93,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         self.slave = False
         self.retriggerable = False
         self.extraInitialDelayTime = 0
-
+        self.idle_states = {}
 
     def AddDevice(self, axis):
         """
@@ -148,6 +156,9 @@ class Ni660XTriggerGateController(TriggerGateController):
             channel.write_attribute("LowTime", passive)
 
         channel.write_attribute("SampPerChan", int(repeats))
+
+        if self.idle_states[axis] != IdleState.NOT_SET:
+            channel.write_attribute("IdleState", self.idle_states[axis].value)
                      
         timing_type = 'Implicit'
         
@@ -227,6 +238,8 @@ class Ni660XTriggerGateController(TriggerGateController):
             v = self.retriggerable
         elif name == 'extrainitialdelaytime':
             v = self.extraInitialDelayTime
+        elif name == 'idleState':
+            v = self.idle_states[axis].value
         return v
 
     def SetAxisExtraPar(self, axis, name, value):
@@ -242,3 +255,8 @@ class Ni660XTriggerGateController(TriggerGateController):
             self.channels[axis].write_attribute('retriggerable', value)
         elif name == 'extrainitialdelaytime':
             self.extraInitialDelayTime = value
+        elif name == 'idleState':
+            idle_states = [state.value for state in IdleState]
+            error_msg = "String {} must be either in {}".format(value, idle_states)
+            assert value in idle_states, error_msg
+            self.idle_states[axis] = IdleState(value)
