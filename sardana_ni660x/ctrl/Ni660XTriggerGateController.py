@@ -78,7 +78,18 @@ class Ni660XTriggerGateController(TriggerGateController):
             Access: ReadWrite,
             Memorize: Memorized,
             DefaultValue: 100
-        }
+        },
+        'startTriggerSource': {
+            Type: str,
+            Access: ReadWrite,
+            Memorize: Memorized,
+        },
+        'triggerSourceType': {
+            Type: str,
+            Access: ReadWrite,
+            Memorize: Memorized,
+            DefaultValue: "DigEdge"
+        },
     }
 
     # relation between state and status  
@@ -101,6 +112,8 @@ class Ni660XTriggerGateController(TriggerGateController):
         self.extraInitialDelayTime = 0
         self.idle_states = {}
         self.duty_cycles = {}
+        self.start_trigger_source = {}
+        self.trigger_source_type = {}
 
     def AddDevice(self, axis):
         """
@@ -173,6 +186,13 @@ class Ni660XTriggerGateController(TriggerGateController):
         if self.slave:
             startTriggerSource = self.startTriggerSource
             startTriggerType = self.startTriggerType
+            if self.start_trigger_source.get(axis) is not None and \
+                self.start_trigger_source.get(axis) != "":
+                startTriggerSource = self.start_trigger_source[axis]
+                startTriggerType = self.trigger_source_type[axis]
+                msg = "startTriggerSource is set for axis {}. Using axis attribute {}" \
+                      "instead of controller property {}.".format(axis, startTriggerSource, self.startTriggerSource)
+                self.warning(msg)
             # If the trigger is manage by external trigger the delay time should be 0
             delay = 0        
             # The trigger should be retriggerable by external trigger?
@@ -249,6 +269,12 @@ class Ni660XTriggerGateController(TriggerGateController):
             v = self.idle_states[axis].value
         elif name == 'dutyCycle':
             v = self.duty_cycles[axis]
+        elif name == 'startTriggerSource':
+            v = self.start_trigger_source.get(axis)
+            if v is None:
+                v = ""
+        elif name == 'triggerSourceType':
+            v = self.trigger_source_type[axis]
         return v
 
     def SetAxisExtraPar(self, axis, name, value):
@@ -274,3 +300,7 @@ class Ni660XTriggerGateController(TriggerGateController):
                         "and 100 (included): (0,100]".format(value)
             assert 0 < value <=100, error_msg
             self.duty_cycles[axis] = value
+        elif name == 'startTriggerSource':
+            self.start_trigger_source[axis] = value
+        elif name == 'triggerSourceType':
+            self.trigger_source_type[axis] = value
