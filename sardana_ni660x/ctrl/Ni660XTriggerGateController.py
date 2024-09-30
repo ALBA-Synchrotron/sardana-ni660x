@@ -8,6 +8,7 @@ from sardana.pool.controller import (TriggerGateController, Type, Description,
 from sardana.tango.core.util import from_tango_state_to_state
 
 from sardana_ni660x.utils import IdleState
+from sardana_ni660x.utils import CONNECTTERMS_DOC, getPFINameFromFriendlyWords, ConnectTerms
 
 ReadWrite = DataAccess.ReadWrite
 ReadOnly = DataAccess.ReadOnly
@@ -48,7 +49,12 @@ class Ni660XTriggerGateController(TriggerGateController):
         "startTriggerType" :{
             Type: str,
             Description: START_TRIGGER_TYPE_DOC,
-            DefaultValue: "DigEdge"}
+            DefaultValue: "DigEdge"},
+        'connectTerms': {
+            Type: str,
+            Description: CONNECTTERMS_DOC,
+            DefaultValue: '{}'
+        }
     }
     axis_attributes = {
         "slave": {
@@ -114,6 +120,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         self.duty_cycles = {}
         self.start_trigger_source = {}
         self.trigger_source_type = {}
+        self.connect_terms_util = ConnectTerms(self.connectTerms)
 
     def AddDevice(self, axis):
         """
@@ -134,6 +141,10 @@ class Ni660XTriggerGateController(TriggerGateController):
         device of the corresponding channel.
         """
         self.channels.pop(axis)
+        self.idle_states.pop(axis, None)
+        self.duty_cycles.pop(axis, None)
+        self.start_trigger_source.pop(axis, None)
+        self.trigger_source_type.pop(axis, None)
 
     def _getState(self, axis):
         channel = self.channels[axis]    
@@ -223,6 +234,13 @@ class Ni660XTriggerGateController(TriggerGateController):
         self._log.debug('PreStartOne(%d): entering...' % axis)
  
         self._log.debug('PreStartOne(%d): leaving...' % axis)
+        return True
+
+    def PreStartAll(self):
+        self._log.debug("PreStartAll(): Entering...")
+        # Apply connect terms
+        self.connect_terms_util.apply_connect_terms()
+        self._log.debug("PreStartAll(): Leaving...")
         return True
 
     def StartOne(self, axis):

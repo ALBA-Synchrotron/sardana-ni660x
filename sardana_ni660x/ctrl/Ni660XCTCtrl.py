@@ -3,7 +3,6 @@ import numpy
 
 import PyTango
 import taurus
-from taurus.core.util import SafeEvaluator
 
 from sardana import State
 from sardana.pool import AcqSynch
@@ -11,6 +10,8 @@ from sardana.pool.controller import (CounterTimerController, Memorize,
                                      Memorized, NotMemorized, Type, Access,
                                      DataAccess, Description, DefaultValue)
 from sardana.sardanavalue import SardanaValue
+
+from sardana_ni660x.utils import CONNECTTERMS_DOC, getPFINameFromFriendlyWords, ConnectTerms
 
 ReadWrite = DataAccess.ReadWrite
 ReadOnly = DataAccess.ReadOnly
@@ -21,42 +22,6 @@ CHANNELDEVNAMES_DOC = ('Comma separated Ni660XCounter Tango device names.',
                        ' Subsequent channels (configured with "input"'
                        ' application type e.g. CICountEdgesChan) are used'
                        ' as counters.')
-
-CONNECTTERMS_DOC = ('String with dictionary form. Keys are Ni660X Tango' 
-                    ' device names. Each value is a list of tuples.'
-                    ' Each tuple has: (source termninal, destination terminal'
-                    ' , polarity configuration)')
-
-NI6602_PFI = {
-    "ctr0": {"src": "PFI39", "gate": "PFI38", "out": "PFI36", "aux": "PFI37"},
-    "ctr1": {"src": "PFI35", "gate": "PFI34", "out": "PFI32", "aux": "PFI33"},
-    "ctr2": {"src": "PFI31", "gate": "PFI30", "out": "PFI28", "aux": "PFI29"},
-    "ctr3": {"src": "PFI27", "gate": "PFI26", "out": "PFI24", "aux": "PFI25"},
-    "ctr4": {"src": "PFI23", "gate": "PFI22", "out": "PFI20", "aux": "PFI21"},
-    "ctr5": {"src": "PFI19", "gate": "PFI18", "out": "PFI16", "aux": "PFI17"},
-    "ctr6": {"src": "PFI15", "gate": "PFI14", "out": "PFI12", "aux": "PFI13"},
-    "ctr7": {"src": "PFI11", "gate": "PFI10", "out": "PFI8",  "aux": "PFI9"}}
-
-def getPFIName(counterName, signal):
-    """ Method to get the PFI signal name for each counter, e.g.:/Dev1/ctr1 """
-    counter = counterName[-4:].lower()
-    pfi = NI6602_PFI[counter][signal.lower()]
-    return counterName[:-4] + pfi
-
-def getPFINameFromFriendlyWords(counter):
-    """
-    Method to check/extract the PFI from a counter name
-    Can be used with /dev1/PFI34 format or /dev1/ctr1/gate
-    """
-    # Convert from friendly words
-    if 'rtsi'in counter.lower():
-        pass
-    elif not 'pfi' in counter.lower():
-        term = counter.rsplit('/',1)
-        ctr = term[0]
-        signal = term[1]
-        counter = getPFIName(ctr, signal)
-    return counter
 
 class Ni660XCTCtrl(object):
     """This class is the Ni600X counter Sardana CounterTimerController.
@@ -130,19 +95,10 @@ class Ni660XCTCtrl(object):
         self._repetitions = 0
         self.state = State.Unknown
         self.status = ""
-        self.cards = {}
-        self.card_configured = {}
         self.ch_configured = {}
-        self.sev = SafeEvaluator()
         self._latency_time = self.latencyTime
         self.current_ch_configured = 0
-        cards = self.sev.eval(self.connectTerms)
-        for card_dev_name in cards.keys():
-            value = cards[card_dev_name]
-            card_dev = taurus.Device(card_dev_name)
-            self.cards[card_dev] = value
-            self.card_configured[card_dev] = False
-
+        self.connect_terms_util = ConnectTerms(self.connectTerms)
 
     def AddDevice(self, axis):
         channel_name = self.channelDevNamesList[axis-1]
@@ -183,11 +139,7 @@ class Ni660XCTCtrl(object):
             self.ch_configured.pop(axis)
         self.channels.pop(axis)
         if len(self.channels) == 0:
-            cards = self.sev.eval(self.connectTerms)
-            for card_dev_name in cards.keys():
-                card_dev = taurus.Device(card_dev_name)
-                del self.cards[card_dev]
-                del self.card_configured[card_dev]
+            self.connect_terms_util.delete_cards()
 
     def GetAxisExtraPar(self, axis, name):
         self._log.debug("GetAxisExtraPar(%d, %s) entering..." % (axis, name))
@@ -296,18 +248,8 @@ class Ni660XCTCtrl(object):
         self._log.debug("PreStartAll(): Entering...")
         # Reset all the channel's Indexe
         self.index = {}
-        for card_dev in self.card_configured.keys():
-            for device_tuple in self.cards[card_dev]:
-                src_terminal = device_tuple[0]
-                #Check if is defined as a friendly words
-                src_terminal = getPFINameFromFriendlyWords(src_terminal)
-                dest_terminal = device_tuple[1]
-                dest_terminal = getPFINameFromFriendlyWords(dest_terminal)
-                polarity = device_tuple[2]
-                card_dev.ConnectTerms([src_terminal,
-                                       dest_terminal,
-                                       polarity])
-            self.card_configured[card_dev] = True
+        # Apply connect terms
+        self.connect_terms_util.apply_connect_terms()
         self._log.debug("PreStartAll(): Leaving...")
         return True
 
