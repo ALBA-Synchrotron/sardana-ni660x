@@ -283,15 +283,15 @@ class Ni660XTriggerGateController(TriggerGateController):
             v = self.retriggerable
         elif name == 'extrainitialdelaytime':
             v = self.extraInitialDelayTime
-        elif name == 'idleState':
+        elif name == 'idlestate':
             v = self.idle_states[axis].value
-        elif name == 'dutyCycle':
+        elif name == 'dutycycle':
             v = self.duty_cycles[axis]
-        elif name == 'startTriggerSource':
+        elif name == 'starttriggersource':
             v = self.start_trigger_source.get(axis)
             if v is None:
                 v = ""
-        elif name == 'triggerSourceType':
+        elif name == 'triggersourcetype':
             v = self.trigger_source_type[axis]
         return v
 
@@ -308,17 +308,17 @@ class Ni660XTriggerGateController(TriggerGateController):
             self.channels[axis].write_attribute('retriggerable', value)
         elif name == 'extrainitialdelaytime':
             self.extraInitialDelayTime = value
-        elif name == 'idleState':
+        elif name == 'idlestate':
             idle_states = [state.value for state in IdleState]
             error_msg = "String {} must be either in {}".format(value, idle_states)
             assert value in idle_states, error_msg
             self.idle_states[axis] = IdleState(value)
-        elif name == 'dutyCycle':
+        elif name == 'dutycycle':
             error_msg = "Value {} must be a percentage between 0 (not included) " + \
                         "and 100 (included): (0,100]".format(value)
             assert 0 < value <=100, error_msg
             self.duty_cycles[axis] = value
-        elif name == 'startTriggerSource':
+        elif name == 'starttriggersource':
             self.start_trigger_source[axis] = value
-        elif name == 'triggerSourceType':
+        elif name == 'triggersourcetype':
             self.trigger_source_type[axis] = value
