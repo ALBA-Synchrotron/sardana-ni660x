@@ -66,7 +66,8 @@ class Ni660XTriggerGateController(TriggerGateController):
         "retriggerable": {
             Type: bool,
             Access: ReadWrite,            
-            Memorize: Memorized
+            Memorize: Memorized,
+            DefaultValue: False
         },
         "extraInitialDelayTime": {
             Type: float,
@@ -115,7 +116,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         self.channel_names = self.channelDevNames.split(",")
         self.channels = {}
         self.slave = {}
-        self.retriggerable = False
+        self.retriggerable = {}
         self.extraInitialDelayTime = 0
         self.idle_states = {}
         self.duty_cycles = {}
@@ -208,7 +209,7 @@ class Ni660XTriggerGateController(TriggerGateController):
             # If the trigger is manage by external trigger the delay time should be 0
             delay = 0        
             # The trigger should be retriggerable by external trigger?
-            if self.retriggerable:
+            if self.retriggerable[axis]:
                 channel.write_attribute('retriggerable',1)
                 timing_type = 'OnDemand'
                 # Set the LowTime to the minimum value. It is needed because
@@ -305,7 +306,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         elif name == 'retriggerable':
             if self._getState(axis) is State.On:
                 self.channels[axis].stop()
-            self.retriggerable = value
+            self.retriggerable[axis] = value
             self.channels[axis].write_attribute('retriggerable', value)
         elif name == 'extrainitialdelaytime':
             self.extraInitialDelayTime = value
