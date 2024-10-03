@@ -60,7 +60,8 @@ class Ni660XTriggerGateController(TriggerGateController):
         "slave": {
             Type: bool,
             Access: ReadWrite,
-            Memorize: Memorized
+            Memorize: Memorized,
+            Default: False
         },
         "retriggerable": {
             Type: bool,
@@ -113,7 +114,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         TriggerGateController.__init__(self, inst, props, *args, **kwargs)
         self.channel_names = self.channelDevNames.split(",")
         self.channels = {}
-        self.slave = False
+        self.slave = {}
         self.retriggerable = False
         self.extraInitialDelayTime = 0
         self.idle_states = {}
@@ -194,7 +195,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         timing_type = 'Implicit'
         
         # Check if the axis trigger generator needs a master trigger to start        
-        if self.slave:
+        if self.slave[axis]:
             startTriggerSource = self.startTriggerSource
             startTriggerType = self.startTriggerType
             if self.start_trigger_source.get(axis) is not None and \
@@ -203,7 +204,7 @@ class Ni660XTriggerGateController(TriggerGateController):
                 startTriggerType = self.trigger_source_type[axis]
                 msg = "startTriggerSource is set for axis {}. Using axis attribute {}" \
                       "instead of controller property {}.".format(axis, startTriggerSource, self.startTriggerSource)
-                self.warning(msg)
+                self._log.warning(msg)
             # If the trigger is manage by external trigger the delay time should be 0
             delay = 0        
             # The trigger should be retriggerable by external trigger?
@@ -277,7 +278,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         self._log.debug("GetAxisExtraPar(%d, %s) entering..." % (axis, name))
         name = name.lower()
         if name == "slave":
-            v = self.slave
+            v = self.slave[axis]
         elif name == 'retriggerable':
             self.rettrigerable =  self.channels[axis].read_attribute('retriggerable').value
             v = self.retriggerable
@@ -300,7 +301,7 @@ class Ni660XTriggerGateController(TriggerGateController):
                         (axis, name, value))
         name = name.lower()
         if name == "slave":
-            self.slave = value
+            self.slave[axis] = value
         elif name == 'retriggerable':
             if self._getState(axis) is State.On:
                 self.channels[axis].stop()
