@@ -117,7 +117,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         self.channels = {}
         self.slave = {}
         self.retriggerable = {}
-        self.extraInitialDelayTime = 0
+        self.extraInitialDelayTime = {}
         self.idle_states = {}
         self.duty_cycles = {}
         self.start_trigger_source = {}
@@ -224,8 +224,8 @@ class Ni660XTriggerGateController(TriggerGateController):
                                 
         channel.write_attribute("StartTriggerSource", startTriggerSource)
         channel.write_attribute("StartTriggerType", startTriggerType)
-        delay = delay + self.extraInitialDelayTime
-        self.extraInitialDelayTime = 0
+        delay = delay + self.extraInitialDelayTime[axis]
+        self.extraInitialDelayTime[axis] = 0
         channel.write_attribute("InitialDelayTime", delay)
         channel.write_attribute('SampleTimingType', timing_type)
         
@@ -284,7 +284,7 @@ class Ni660XTriggerGateController(TriggerGateController):
             self.rettrigerable =  self.channels[axis].read_attribute('retriggerable').value
             v = self.retriggerable
         elif name == 'extrainitialdelaytime':
-            v = self.extraInitialDelayTime
+            v = self.extraInitialDelayTime[axis]
         elif name == 'idlestate':
             v = self.idle_states[axis].value
         elif name == 'dutycycle':
@@ -309,7 +309,7 @@ class Ni660XTriggerGateController(TriggerGateController):
             self.retriggerable[axis] = value
             self.channels[axis].write_attribute('retriggerable', value)
         elif name == 'extrainitialdelaytime':
-            self.extraInitialDelayTime = value
+            self.extraInitialDelayTime[axis] = value
         elif name == 'idlestate':
             idle_states = [state.value for state in IdleState]
             error_msg = "String {} must be either in {}".format(value, idle_states)
