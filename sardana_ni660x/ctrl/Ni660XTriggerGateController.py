@@ -98,6 +98,12 @@ class Ni660XTriggerGateController(TriggerGateController):
             Memorize: Memorized,
             DefaultValue: "DigEdge"
         },
+        'ignoreSlaveDelay': {
+            Type: bool,
+            Access: ReadWrite,
+            Memorize: Memorized,
+            DefaultValue: True
+        }
     }
 
     # relation between state and status  
@@ -122,6 +128,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         self.duty_cycles = {}
         self.start_trigger_source = {}
         self.trigger_source_type = {}
+        self.ignore_slave_delay = {}
         self.connect_terms_util = ConnectTerms(self.connectTerms)
 
     def AddDevice(self, axis):
@@ -206,8 +213,9 @@ class Ni660XTriggerGateController(TriggerGateController):
                 msg = "startTriggerSource is set for axis {}. Using axis attribute {}" \
                       "instead of controller property {}.".format(axis, startTriggerSource, self.startTriggerSource)
                 self._log.warning(msg)
-            # If the trigger is manage by external trigger the delay time should be 0
-            delay = 0        
+            if self.ignore_slave_delay[axis]:
+                # If the trigger is managed by external trigger the delay time (usually acceleration time) may not be desired.
+                delay = 0        
             # The trigger should be retriggerable by external trigger?
             if self.retriggerable[axis]:
                 channel.write_attribute('retriggerable',1)
@@ -295,6 +303,8 @@ class Ni660XTriggerGateController(TriggerGateController):
                 v = ""
         elif name == 'triggersourcetype':
             v = self.trigger_source_type[axis]
+        elif name == 'ignoreslavedelay':
+            v = self.ignore_slave_delay[axis]
         return v
 
     def SetAxisExtraPar(self, axis, name, value):
@@ -324,3 +334,5 @@ class Ni660XTriggerGateController(TriggerGateController):
             self.start_trigger_source[axis] = value
         elif name == 'triggersourcetype':
             self.trigger_source_type[axis] = value
+        elif name == 'ignoreslavedelay':
+            self.ignore_slave_delay[axis] = value
