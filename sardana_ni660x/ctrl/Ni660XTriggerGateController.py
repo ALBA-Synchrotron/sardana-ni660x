@@ -61,7 +61,7 @@ class Ni660XTriggerGateController(TriggerGateController):
             Type: bool,
             Access: ReadWrite,
             Memorize: Memorized,
-            Default: False
+            DefaultValue: False
         },
         "retriggerable": {
             Type: bool,
@@ -281,8 +281,8 @@ class Ni660XTriggerGateController(TriggerGateController):
         if name == "slave":
             v = self.slave[axis]
         elif name == 'retriggerable':
-            self.rettrigerable =  self.channels[axis].read_attribute('retriggerable').value
-            v = self.retriggerable
+            self.retriggerable[axis] = self.channels[axis].read_attribute('retriggerable').value
+            v = self.retriggerable[axis]
         elif name == 'extrainitialdelaytime':
             v = self.extraInitialDelayTime[axis]
         elif name == 'idlestate':
