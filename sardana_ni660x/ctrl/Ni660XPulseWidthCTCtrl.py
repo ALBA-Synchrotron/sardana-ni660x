@@ -1,5 +1,9 @@
-from sardana.pool.controller import CounterTimerController
-from sardana_ni660x.ctrl.Ni660XCTCtrl import *
+from sardana import DataAccess
+from sardana.pool.controller import (CounterTimerController, Memorize,
+                                     Memorized, Type, Access)
+
+from sardana_ni660x.ctrl.Ni660XCTCtrl import Ni660XCTCtrl
+from sardana_ni660x.utils import getPFIName
 
 
 # The order of inheritance is important. The CounterTimerController
@@ -19,7 +23,7 @@ class Ni660XPulseWidthCTCtrl(Ni660XCTCtrl, CounterTimerController):
     axis_attributes.update({
         "inputterminal": {
             Type: str,
-            Access: ReadWrite,
+            Access: DataAccess.ReadWrite,
             Memorize: Memorized
         },
     })
