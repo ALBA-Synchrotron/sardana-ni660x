@@ -1,7 +1,6 @@
 from enum import Enum
 
-import taurus
-from taurus.core.util import SafeEvaluator
+import tango
 
 class IdleState(Enum):
     LOW = "Low"
@@ -48,13 +47,12 @@ def getPFINameFromFriendlyWords(counter):
 class ConnectTerms:
     def __init__(self, connect_terms):
         self.connectTerms = connect_terms
-        self.sev = SafeEvaluator()
         self.cards = {}
         self.card_configured = {}
-        cards = self.sev.eval(self.connectTerms)
+        cards = eval(self.connectTerms)
         for card_dev_name in cards.keys():
             value = cards[card_dev_name]
-            card_dev = taurus.Device(card_dev_name)
+            card_dev = tango.DeviceProxy(card_dev_name)
             self.cards[card_dev] = value
             self.card_configured[card_dev] = False
 
@@ -75,7 +73,7 @@ class ConnectTerms:
     def delete_cards(self):
         cards = self.sev.eval(self.connectTerms)
         for card_dev_name in cards.keys():
-            card_dev = taurus.Device(card_dev_name)
+            card_dev = tango.DeviceProxy(card_dev_name)
             del self.cards[card_dev]
             del self.card_configured[card_dev]
 
