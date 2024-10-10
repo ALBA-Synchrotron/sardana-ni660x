@@ -92,11 +92,10 @@ class Ni660XTriggerGateController(TriggerGateController):
             Access: ReadWrite,
             Memorize: Memorized,
         },
-        'triggerSourceType': {
+        'startTriggerType': {
             Type: str,
             Access: ReadWrite,
             Memorize: Memorized,
-            DefaultValue: "DigEdge"
         },
         'ignoreSlaveDelay': {
             Type: bool,
@@ -119,16 +118,8 @@ class Ni660XTriggerGateController(TriggerGateController):
         properties.
         """
         TriggerGateController.__init__(self, inst, props, *args, **kwargs)
-        self.channel_names = self.channelDevNames.split(",")
         self.channels = {}
-        self.slave = {}
-        self.retriggerable = {}
-        self.extraInitialDelayTime = {}
-        self.idle_states = {}
-        self.duty_cycles = {}
-        self.start_trigger_source = {}
-        self.trigger_source_type = {}
-        self.ignore_slave_delay = {}
+        self.channel_names = self.channelDevNames.split(",")
         self.connect_terms_util = ConnectTerms(self.connectTerms)
 
     def AddDevice(self, axis):
@@ -137,12 +128,16 @@ class Ni660XTriggerGateController(TriggerGateController):
         the corresponding channel.
         """
         channel_name = self.channel_names[axis - 1]
+        channel = self.channels[axis] = {}
         try:
-            self.channels[axis] = PyTango.DeviceProxy(channel_name)
+            channel['device'] = PyTango.DeviceProxy(channel_name)
         except Exception as e:
             msg = 'Could not create tango device: %s, details: %s' %\
                   (channel_name, e)
             self._log.debug(msg)
+
+        channel['starttriggersource'] = self.startTriggerSource
+        channel['starttriggertype'] = self.startTriggerType
 
     def DeleteDevice(self, axis):
         """
@@ -150,13 +145,9 @@ class Ni660XTriggerGateController(TriggerGateController):
         device of the corresponding channel.
         """
         self.channels.pop(axis)
-        self.idle_states.pop(axis, None)
-        self.duty_cycles.pop(axis, None)
-        self.start_trigger_source.pop(axis, None)
-        self.trigger_source_type.pop(axis, None)
 
     def _getState(self, axis):
-        channel = self.channels[axis]    
+        channel = self.channels[axis]['device']    
         state = channel.read_attribute('State').value
         if state == PyTango.DevState.RUNNING:
            return State.Moving
@@ -170,9 +161,10 @@ class Ni660XTriggerGateController(TriggerGateController):
         Set axis configuration.
         """
 
+        channel_cfg = self.channels[axis]
         group = configuration[0]
         delay = group[SynchParam.Delay][SynchDomain.Time]
-        active = group[SynchParam.Active][SynchDomain.Time] * (self.duty_cycles[axis]/100)
+        active = group[SynchParam.Active][SynchDomain.Time] * (channel_cfg['dutycycle']/100)
         total = group[SynchParam.Total][SynchDomain.Time]
         passive = total - active
         repeats = group[SynchParam.Repeats]
@@ -182,8 +174,8 @@ class Ni660XTriggerGateController(TriggerGateController):
         # state that they finished the last generation. In case of 
         # Ni660XCounter, write of some attributes require the channel 
         # to be in STANDBY state. Due to that we stop the channel.
-        
-        channel = self.channels[axis]          
+
+        channel = channel_cfg['device']          
         if self._getState(axis) is State.On:
             channel.stop()
 
@@ -197,28 +189,24 @@ class Ni660XTriggerGateController(TriggerGateController):
 
         channel.write_attribute("SampPerChan", int(repeats))
 
-        if self.idle_states[axis] != IdleState.NOT_SET:
-            channel.write_attribute("IdleState", self.idle_states[axis].value)
+        idle_state = channel_cfg['idlestate']
+        if idle_state != IdleState.NOT_SET:
+            channel.write_attribute("IdleState", idle_state.value)
                      
         timing_type = 'Implicit'
         
         # Check if the axis trigger generator needs a master trigger to start        
-        if self.slave[axis]:
-            startTriggerSource = self.startTriggerSource
-            startTriggerType = self.startTriggerType
-            if self.start_trigger_source.get(axis) is not None and \
-                self.start_trigger_source.get(axis) != "":
-                startTriggerSource = self.start_trigger_source[axis]
-                startTriggerType = self.trigger_source_type[axis]
-                msg = "startTriggerSource is set for axis {}. Using axis attribute {}" \
-                      "instead of controller property {}.".format(axis, startTriggerSource, self.startTriggerSource)
-                self._log.warning(msg)
-            if self.ignore_slave_delay[axis]:
+        if channel_cfg['slave']:
+            start_trigger_source = channel_cfg['starttriggersource']
+            start_trigger_type = channel_cfg['starttriggertype']
+            
+            if channel_cfg['ignoreslavedelay']:
                 # If the trigger is managed by external trigger the delay time (usually acceleration time) may not be desired.
                 delay = 0        
-            # The trigger should be retriggerable by external trigger?
-            if self.retriggerable[axis]:
-                channel.write_attribute('retriggerable',1)
+
+            # The trigger should be retriggerable by external trigger
+            retriggerable = self.getRetriggerable(axis)
+            if retriggerable:
                 timing_type = 'OnDemand'
                 # Set the LowTime to the minimum value. It is needed because
                 # the latency time of the measurement group does not take
@@ -226,14 +214,15 @@ class Ni660XTriggerGateController(TriggerGateController):
                 # NI as slave of the icepapa or pmac it needs time to
                 # prepare the next trigger.
                 channel.write_attribute("LowTime", 0.000003)
+            
         else:
-            startTriggerSource = 'None'
-            startTriggerType = 'None'            
+            start_trigger_source = 'None'
+            start_trigger_type = 'None'            
                                 
-        channel.write_attribute("StartTriggerSource", startTriggerSource)
-        channel.write_attribute("StartTriggerType", startTriggerType)
-        delay = delay + self.extraInitialDelayTime[axis]
-        self.extraInitialDelayTime[axis] = 0
+        channel.write_attribute("StartTriggerSource", start_trigger_source)
+        channel.write_attribute("StartTriggerType", start_trigger_type)
+        delay = delay + channel_cfg['extrainitialdelaytime']
+        channel_cfg['extrainitialdelaytime'] = 0
         channel.write_attribute("InitialDelayTime", delay)
         channel.write_attribute('SampleTimingType', timing_type)
         
@@ -258,7 +247,7 @@ class Ni660XTriggerGateController(TriggerGateController):
         Start generation - start the specified channel.
         """
         self._log.debug('StartOne(%d): entering...' % axis)
-        channel = self.channels[axis]
+        channel = self.channels[axis]['device']
         channel.Start()
         self._log.debug('StartOne(%d): leaving...' % axis)
 
@@ -279,60 +268,37 @@ class Ni660XTriggerGateController(TriggerGateController):
         Abort generation - stop the specified channel
         """
         self._log.debug('AbortOne(%d): entering...' % axis)
-        channel = self.channels[axis]
+        channel = self.channels[axis]['device']
         channel.Stop()
         self._log.debug('AbortOne(%d): leaving...' % axis)
 
+    def getRetriggerable(self, axis):
+        return self.channels[axis]['device'].read_attribute('retriggerable').value
+        
+    def setRetriggerable(self, axis, value):
+        device = self.channels[axis]['device'] 
+        if self._getState(axis) is State.On:
+            device.stop()
+        device.write_attribute('retriggerable', value)
+    
     def GetAxisExtraPar(self, axis, name):
         self._log.debug("GetAxisExtraPar(%d, %s) entering..." % (axis, name))
         name = name.lower()
-        if name == "slave":
-            v = self.slave[axis]
-        elif name == 'retriggerable':
-            self.retriggerable[axis] = self.channels[axis].read_attribute('retriggerable').value
-            v = self.retriggerable[axis]
-        elif name == 'extrainitialdelaytime':
-            v = self.extraInitialDelayTime[axis]
-        elif name == 'idlestate':
-            v = self.idle_states[axis].value
-        elif name == 'dutycycle':
-            v = self.duty_cycles[axis]
-        elif name == 'starttriggersource':
-            v = self.start_trigger_source.get(axis)
-            if v is None:
-                v = ""
-        elif name == 'triggersourcetype':
-            v = self.trigger_source_type[axis]
-        elif name == 'ignoreslavedelay':
-            v = self.ignore_slave_delay[axis]
-        return v
-
+        value = self.channels[axis][name]
+        if name == 'idlestate':
+            value = value.value
+        
+        return value
+    
     def SetAxisExtraPar(self, axis, name, value):
         self._log.debug("SetAxisExtraPar(%d, %s, %s) entering..." %
                         (axis, name, value))
         name = name.lower()
-        if name == "slave":
-            self.slave[axis] = value
-        elif name == 'retriggerable':
-            if self._getState(axis) is State.On:
-                self.channels[axis].stop()
-            self.retriggerable[axis] = value
-            self.channels[axis].write_attribute('retriggerable', value)
-        elif name == 'extrainitialdelaytime':
-            self.extraInitialDelayTime[axis] = value
-        elif name == 'idlestate':
-            idle_states = [state.value for state in IdleState]
-            error_msg = "String {} must be either in {}".format(value, idle_states)
-            assert value in idle_states, error_msg
-            self.idle_states[axis] = IdleState(value)
+        if name == 'idlestate':
+            value = IdleState(value)
         elif name == 'dutycycle':
-            error_msg = "Value {} must be a percentage between 0 (not included) " + \
-                        "and 100 (included): (0,100]".format(value)
-            assert 0 < value <=100, error_msg
-            self.duty_cycles[axis] = value
-        elif name == 'starttriggersource':
-            self.start_trigger_source[axis] = value
-        elif name == 'triggersourcetype':
-            self.trigger_source_type[axis] = value
-        elif name == 'ignoreslavedelay':
-            self.ignore_slave_delay[axis] = value
+            error_msg = ("Value {} must be a percentage between 0 (not included) " 
+                        "and 100 (included): (0,100]").format(value)
+            assert 0 < value <= 100, error_msg
+
+        self.channels[axis][name] = value
