@@ -3,12 +3,12 @@ from sardana import State
 from sardana.pool.pooldefs import SynchDomain, SynchParam
 from sardana.pool.controller import (TriggerGateController, Type, Description,
                                      DefaultValue, Access, DataAccess, Memorize, 
-                                     Memorized, NotMemorized)
+                                     Memorized)
 
 from sardana.tango.core.util import from_tango_state_to_state
 
 from sardana_ni660x.utils import IdleState
-from sardana_ni660x.utils import CONNECTTERMS_DOC, getPFINameFromFriendlyWords, ConnectTerms
+from sardana_ni660x.utils import CONNECTTERMS_DOC, ConnectTerms
 
 ReadWrite = DataAccess.ReadWrite
 ReadOnly = DataAccess.ReadOnly
