@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 import numpy
 
-import PyTango
-import taurus
+import tango
 
 from sardana import State
 from sardana.pool import AcqSynch
-from sardana.pool.controller import (CounterTimerController, Memorize,
-                                     Memorized, NotMemorized, Type, Access,
+from sardana.pool.controller import (Memorize,
+                                     Memorized, Type, Access,
                                      DataAccess, Description, DefaultValue)
 from sardana.sardanavalue import SardanaValue
 
-from sardana_ni660x.utils import CONNECTTERMS_DOC, getPFINameFromFriendlyWords, ConnectTerms
+from sardana_ni660x.utils import CONNECTTERMS_DOC, ConnectTerms
 
 ReadWrite = DataAccess.ReadWrite
 ReadOnly = DataAccess.ReadOnly
@@ -103,9 +102,9 @@ class Ni660XCTCtrl(object):
     def AddDevice(self, axis):
         channel_name = self.channelDevNamesList[axis-1]
         try:
-            self.channels[axis] = taurus.Device(channel_name)
+            self.channels[axis] = tango.DeviceProxy(channel_name)
         except Exception as e:
-            msg = 'Exception when it created the taurus devices: %s' % e
+            msg = 'Exception when it created the tango devices: %s' % e
             self._log.error(msg)
 
         # check the current application type
@@ -166,7 +165,7 @@ class Ni660XCTCtrl(object):
             raise Exception('Attribute %s is not foreseen for timer')
         if name in self.direct_attributes:
             channel = self.channels[axis]
-            if channel.State() != PyTango.DevState.STANDBY:
+            if channel.State() != tango.DevState.STANDBY:
                 channel.Stop()
             self.channels[axis].write_attribute(name, value)
         else:
@@ -184,16 +183,16 @@ class Ni660XCTCtrl(object):
             return state, status
 
         # RUNNING state translates directly to MOVING
-        if state == PyTango.DevState.RUNNING:
+        if state == tango.DevState.RUNNING:
             state = State.Moving
         # STANDBY state translates directly to ON
-        elif state == PyTango.DevState.STANDBY:
+        elif state == tango.DevState.STANDBY:
             state = State.On
         # In case of ON state check if all the data were 
         # already read (by the ReadOne method) 
         # if yes, return ON, if data were not yet passed
         # return MOVING
-        elif state == PyTango.DevState.ON:
+        elif state == tango.DevState.ON:
             state = State.On
         status = self.state_to_status[state]
         return state, status
@@ -202,16 +201,16 @@ class Ni660XCTCtrl(object):
         if axis != 1:
             state = self.channels[axis].State()
             # RUNNING state translates directly to MOVING
-            if state == PyTango.DevState.RUNNING:
+            if state == tango.DevState.RUNNING:
                 state = State.Moving
             # STANDBY state translates directly to ON
-            elif state == PyTango.DevState.STANDBY:
+            elif state == tango.DevState.STANDBY:
                 state = State.On
             # In case of ON state check if all the data were 
             # already read (by the ReadOne method) 
             # if yes, return ON, if data were not yet passed
             # return MOVING
-            elif state == PyTango.DevState.ON:
+            elif state == tango.DevState.ON:
                 if axis not in self.index:
                     # The State is called without started the acquisition it
                     # is possible on the measurement group read state
@@ -263,7 +262,7 @@ class Ni660XCTCtrl(object):
         self.delay_counter[axis] = 0
         if axis != 1:
             channel = self.channels[axis]
-            if channel.State() != PyTango.DevState.STANDBY:
+            if channel.State() != tango.DevState.STANDBY:
                 channel.Stop()
             if self.ch_configured[axis] == False:
                 attributes = self.attributes[axis]
@@ -332,7 +331,7 @@ class Ni660XCTCtrl(object):
                        max_integ_time)
                 raise Exception(msg)
             channel = self.channels[axis]
-            if channel.State() != PyTango.DevState.STANDBY:
+            if channel.State() != tango.DevState.STANDBY:
                 channel.Stop()
             channel.write_attribute('SampleTimingType', 'Implicit')
             channel.write_attribute('SampPerChan', int(self._repetitions))
@@ -346,7 +345,7 @@ class Ni660XCTCtrl(object):
         # In case of Software _synchronization Stop the timer as well
         if axis != 1 or self._synchronization == AcqSynch.SoftwareTrigger:
             channel = self.channels[axis]
-            if channel.State() != PyTango.DevState.STANDBY:
+            if channel.State() != tango.DevState.STANDBY:
                 channel.Stop()
         self.aborted[axis] = True
 

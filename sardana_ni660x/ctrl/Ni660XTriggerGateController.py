@@ -133,20 +133,20 @@ class Ni660XTriggerGateController(TriggerGateController):
 
     def AddDevice(self, axis):
         """
-        Add axis to the controller, basically creates a taurus device of
+        Add axis to the controller, basically creates a tango device of
         the corresponding channel.
         """
         channel_name = self.channel_names[axis - 1]
         try:
             self.channels[axis] = PyTango.DeviceProxy(channel_name)
         except Exception as e:
-            msg = 'Could not create taurus device: %s, details: %s' %\
+            msg = 'Could not create tango device: %s, details: %s' %\
                   (channel_name, e)
             self._log.debug(msg)
 
     def DeleteDevice(self, axis):
         """
-        Remove axis from the controller, basically forgets about the taurus
+        Remove axis from the controller, basically forgets about the tango
         device of the corresponding channel.
         """
         self.channels.pop(axis)
