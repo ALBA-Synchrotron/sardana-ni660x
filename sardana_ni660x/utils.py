@@ -71,7 +71,7 @@ class ConnectTerms:
             self.card_configured[card_dev] = True
 
     def delete_cards(self):
-        cards = self.sev.eval(self.connectTerms)
+        cards = eval(self.connectTerms)
         for card_dev_name in cards.keys():
             card_dev = tango.DeviceProxy(card_dev_name)
             del self.cards[card_dev]
