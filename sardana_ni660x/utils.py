@@ -11,7 +11,8 @@ class IdleState(Enum):
 CONNECTTERMS_DOC = ('String with dictionary form. Keys are Ni660X Tango' 
                     ' device names. Each value is a list of tuples.'
                     ' Each tuple has: (source termninal, destination terminal'
-                    ' , polarity configuration)')
+                    ' , polarity configuration). IMPORTANT: declare this property'
+                    ' only in one controller (TriggerGate or CounterTimer controller).')
 
 NI6602_PFI = {
     "ctr0": {"src": "PFI39", "gate": "PFI38", "out": "PFI36", "aux": "PFI37"},
