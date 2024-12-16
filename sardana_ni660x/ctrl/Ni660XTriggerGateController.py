@@ -122,6 +122,9 @@ class Ni660XTriggerGateController(TriggerGateController):
         self.channel_names = self.channelDevNames.split(",")
         self.connect_terms_util = ConnectTerms(self.connectTerms)
 
+        # Apply connect terms
+        self.connect_terms_util.apply_connect_terms()
+
     def AddDevice(self, axis):
         """
         Add axis to the controller, basically creates a tango device of
@@ -237,8 +240,7 @@ class Ni660XTriggerGateController(TriggerGateController):
 
     def PreStartAll(self):
         self._log.debug("PreStartAll(): Entering...")
-        # Apply connect terms
-        self.connect_terms_util.apply_connect_terms()
+
         self._log.debug("PreStartAll(): Leaving...")
         return True
 
