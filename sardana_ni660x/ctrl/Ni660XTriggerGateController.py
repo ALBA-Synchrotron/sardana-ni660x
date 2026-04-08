@@ -1,3 +1,4 @@
+import json
 import PyTango
 from sardana import State
 from sardana.pool.pooldefs import SynchDomain, SynchParam
@@ -121,6 +122,11 @@ class Ni660XTriggerGateController(TriggerGateController):
         self.channels = {}
         self.channel_names = self.channelDevNames.split(",")
         self.connect_terms_util = ConnectTerms(self.connectTerms)
+
+        self.default_start_input_conf = {
+            "starttriggersource": "None",
+            "starttriggertype": "None",
+        }
 
         # Apply connect terms
         self.connect_terms_util.apply_connect_terms()
@@ -282,6 +288,25 @@ class Ni660XTriggerGateController(TriggerGateController):
         if self._getState(axis) is State.On:
             device.stop()
         device.write_attribute('retriggerable', value)
+
+    def GetAxisPar(self, axis, parameter):
+        return self.channels[axis].get(parameter)
+        
+    def SetAxisPar(self, axis, par, value):
+        if par == "start_input":
+            if value is None:
+                self.channels[axis]['slave'] = False
+                for key, value in self.default_start_input_conf.items():
+                    self.channels[axis][key] = value
+            else:
+                conf = get_start_input_conf(value)
+                self.channels[axis]['slave'] = True
+                for key, value in conf.items():
+                    self.channels[axis][key] = value
+        else:
+            raise ValueError(
+                "unsupported axis par {} for axis {}".format(par, axis)
+            )
     
     def GetAxisExtraPar(self, axis, name):
         self._log.debug("GetAxisExtraPar(%d, %s) entering..." % (axis, name))
@@ -304,3 +329,14 @@ class Ni660XTriggerGateController(TriggerGateController):
             assert 0 < value <= 100, error_msg
 
         self.channels[axis][name] = value
+
+
+def get_start_input_conf(conf):
+    conf = json.loads(conf)
+    expected_keys = ["starttriggersource", "starttriggertype"]
+    missing_keys = [key for key in expected_keys if key not in conf]
+    assert not missing_keys, (
+        "Missing expected keys in start_input configuration: {}".format(", ".join(missing_keys))
+    )
+    return conf
+    
