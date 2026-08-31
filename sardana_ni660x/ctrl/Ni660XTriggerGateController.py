@@ -293,7 +293,9 @@ class Ni660XTriggerGateController(TriggerGateController):
         return self.channels[axis].get(parameter)
         
     def SetAxisPar(self, axis, par, value):
+        self._log.debug("In setAxisPar {} {} {}".format(axis, par, value))
         if par == "start_input":
+            self._log.debug("Setting start_input in axis {}: {}".format(axis, value))
             if value is None:
                 self.channels[axis]['slave'] = False
                 for key, value in self.default_start_input_conf.items():
@@ -332,7 +334,6 @@ class Ni660XTriggerGateController(TriggerGateController):
 
 
 def get_start_input_conf(conf):
-    conf = json.loads(conf)
     expected_keys = ["starttriggersource", "starttriggertype"]
     missing_keys = [key for key in expected_keys if key not in conf]
     assert not missing_keys, (
