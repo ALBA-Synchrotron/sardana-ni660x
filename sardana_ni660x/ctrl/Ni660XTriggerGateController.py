@@ -58,12 +58,6 @@ class Ni660XTriggerGateController(TriggerGateController):
         }
     }
     axis_attributes = {
-        "slave": {
-            Type: bool,
-            Access: ReadWrite,
-            Memorize: Memorized,
-            DefaultValue: False
-        },
         "retriggerable": {
             Type: bool,
             Access: ReadWrite,            
@@ -88,22 +82,6 @@ class Ni660XTriggerGateController(TriggerGateController):
             Memorize: Memorized,
             DefaultValue: 100
         },
-        'startTriggerSource': {
-            Type: str,
-            Access: ReadWrite,
-            Memorize: Memorized,
-        },
-        'startTriggerType': {
-            Type: str,
-            Access: ReadWrite,
-            Memorize: Memorized,
-        },
-        'ignoreSlaveDelay': {
-            Type: bool,
-            Access: ReadWrite,
-            Memorize: Memorized,
-            DefaultValue: True
-        }
     }
 
     # relation between state and status  
